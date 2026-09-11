@@ -9,6 +9,17 @@
         </session-timeout>
     </session-config>
     
+    <!-- Налаштування фільтрів -->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>step.learning.java231web.filters.EncodingFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>*</url-pattern>
+    </filter-mapping>
+    
+    <!-- Налаштування сервлетів -->
     <!-- Аналог інструкції homeServlet = new HomeServlet()  -->
     <servlet>
         <servlet-name>homeServlet</servlet-name>

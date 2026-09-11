@@ -4,6 +4,7 @@
     Author     : samoylenko_d
 --%>
 
+<%@page import="java.nio.charset.Charset"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%
     String viewName = (String) request.getAttribute("servlet");
@@ -13,6 +14,12 @@
     else {
         viewName = viewName.toLowerCase() + ".jsp";
     }
+    Charset charset = (Charset) request.getAttribute("charset");
+    String charsetName = charset == null ? "undefined" : charset.name();
+    
+    String contextPath = request.getContextPath() ;   // частина адреси,
+    // що відповідає за контекст - назва проєкту. Починається з "/",
+    // завершується без "/". В ASP для цього спецсимвол "~"
 %>
 <!DOCTYPE html>
 <html>
@@ -21,10 +28,17 @@
         <title>JSP Page</title>
     </head>
     <body>
-        <header>The header</header>
+        <header>
+            The header
+            <nav>
+                <a href="<%= contextPath %>/gson" >Gson</a>
+            </nav>
+        </header>
         <main>
             <jsp:include page="<%= viewName %>" />
         </main>
-        <footer>The footer</footer>
+        <footer>The footer. Shown in '<%= charsetName %>'. 
+            Auth: <%= request.getAttribute("auth") %>
+        </footer>
     </body>
 </html>
