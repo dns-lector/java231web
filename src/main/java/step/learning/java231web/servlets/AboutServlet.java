@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Сервлет-контролер сторінки /about
+ * Сервлет-контролер сторінки "~/about"
  * @author samoylenko_d
  */
 @WebServlet("/about")
