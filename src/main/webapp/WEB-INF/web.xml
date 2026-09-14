@@ -9,7 +9,20 @@
         </session-timeout>
     </session-config>
     
-    <!-- Налаштування фільтрів -->
+    <filter>
+        <filter-name>guiceFilter</filter-name>
+        <filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>guiceFilter</filter-name>
+        <url-pattern>*</url-pattern>
+    </filter-mapping>
+    
+    <listener>
+        <listener-class>step.learning.java231web.ioc.IocContextListener</listener-class>
+    </listener>
+    
+    <!-- Налаштування фільтрів
     <filter>
         <filter-name>encodingFilter</filter-name>
         <filter-class>step.learning.java231web.filters.EncodingFilter</filter-class>
@@ -17,10 +30,10 @@
     <filter-mapping>
         <filter-name>encodingFilter</filter-name>
         <url-pattern>*</url-pattern>
-    </filter-mapping>
+    </filter-mapping> -->
     
     <!-- Налаштування сервлетів -->
-    <!-- Аналог інструкції homeServlet = new HomeServlet()  -->
+    <!-- Аналог інструкції homeServlet = new HomeServlet() 
     <servlet>
         <servlet-name>homeServlet</servlet-name>
         <servlet-class>step.learning.java231web.servlets.HomeServlet</servlet-class>
@@ -29,5 +42,5 @@
     <servlet-mapping>
         <servlet-name>homeServlet</servlet-name>
         <url-pattern></url-pattern>
-    </servlet-mapping>
+    </servlet-mapping> -->
 </web-app>

@@ -1,8 +1,9 @@
 package step.learning.java231web.servlets;
 
 import com.google.gson.Gson;
+import com.google.inject.Singleton;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
+// import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,7 +13,8 @@ import java.io.IOException;
  * Робота з JSON. Бібліотека Gson
  * @author Lector
  */
-@WebServlet("/gson")
+// @WebServlet("/gson")
+@Singleton
 public class GsonServlet extends HttpServlet {
     private Gson gson = new Gson();
     

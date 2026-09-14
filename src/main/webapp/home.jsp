@@ -1,6 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%
-    String str = "The String";
+    String str = "The String " + request.getAttribute("hash");
     int x = 10;
 %>
 <h1>Hello World!</h1>
