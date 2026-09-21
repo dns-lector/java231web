@@ -32,6 +32,7 @@
             The header
             <nav>
                 <a href="<%= contextPath %>/gson" >Gson</a>
+                <a href="<%= contextPath %>/db" >DB</a>
             </nav>
         </header>
         <main>

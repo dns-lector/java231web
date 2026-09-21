@@ -1,0 +1,11 @@
+{
+    "name": "Local MySql connection",
+    "provider": "jdbc",
+    "scheme": "mysql",
+    "host": "localhost",
+    "port": 3308,
+    "database": "java_231",
+    "params": "serverTimezone=UTC&characterEncoding=UTF-8",
+    "user": "user_231j",
+    "password": "pass_231"
+}
