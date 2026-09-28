@@ -1,5 +1,7 @@
 package step.learning.java231web.data.dto;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.UUID;
 
 /**
@@ -13,6 +15,20 @@ public class UserAccess {
     private String salt;
     private String dk;
     private String role;
+    
+    public static UserAccess fromResultSet(ResultSet rs) throws SQLException {
+        if(rs.next()) {
+            UserAccess ua = new UserAccess();
+            ua.setId( UUID.fromString(rs.getString("id")) );
+            ua.setUserId( UUID.fromString(rs.getString("user_id")) );
+            ua.setLogin( rs.getString("login") );
+            ua.setSalt( rs.getString("salt") );
+            ua.setDk( rs.getString("dk") );
+            ua.setRole( rs.getString("role") );
+            return ua;
+        }
+        else return null;
+    }
 
     public UUID getId() {
         return id;

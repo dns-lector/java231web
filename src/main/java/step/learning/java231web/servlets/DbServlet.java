@@ -2,7 +2,6 @@ package step.learning.java231web.servlets;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.mysql.cj.jdbc.MysqlDataSource;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,7 +44,10 @@ public class DbServlet extends HttpServlet{
         if(connection != null) {
             try {
                 userDao.createTable();
-                req.setAttribute("sql", "Query OK" );  
+                String attr = "Create Tables OK";
+                userDao.seedData();
+                attr += ", Seed Data OK";
+                req.setAttribute("sql", attr );  
             }
             catch( SQLException ex ) {
                 req.setAttribute("sql", ex.getMessage() );  

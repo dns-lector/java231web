@@ -7,6 +7,8 @@ import step.learning.java231web.services.db.IDbService;
 import step.learning.java231web.services.db.MySqlDbService;
 import step.learning.java231web.services.hash.IHashService;
 import step.learning.java231web.services.hash.Md5HashService;
+import step.learning.java231web.services.kdf.IKdfService;
+import step.learning.java231web.services.kdf.PbKdf1Service;
 
 /**
  * Модуль конфігурації сервісів (служб) інжектора
@@ -26,6 +28,8 @@ public class IocServicesModule extends AbstractModule {
                     .setDateFormat("yyyy-MM-dd HH:mm:ss")
                     .create() 
         );
+        bind( IKdfService.class )
+                .to( PbKdf1Service.class );
     }
     
 }

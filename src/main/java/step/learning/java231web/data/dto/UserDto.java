@@ -1,5 +1,8 @@
 package step.learning.java231web.data.dto;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.UUID;
 
@@ -13,45 +16,60 @@ public class UserDto {
     private String email;
     private Date createdAt; 
     private Date deletedAt; 
+    
+    public static UserDto fromResultSet(ResultSet rs) throws SQLException {
+        Timestamp t = rs.getTimestamp("deleted_at");
+        return new UserDto()
+                .setId(UUID.fromString(rs.getString("id")))
+                .setName(rs.getString("name"))
+                .setEmail(rs.getString("email"))
+                .setCreatedAt(new Date(rs.getTimestamp("created_at").getTime()))
+                .setDeletedAt(t == null ? null : new Date(t.getTime()));
+    }
 
     public UUID getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public UserDto setId(UUID id) {
         this.id = id;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public UserDto setName(String name) {
         this.name = name;
+        return this;
     }
 
     public String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
+    public UserDto setEmail(String email) {
         this.email = email;
+        return this;
     }
 
     public Date getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Date createdAt) {
+    public UserDto setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
+        return this;
     }
 
     public Date getDeletedAt() {
         return deletedAt;
     }
 
-    public void setDeletedAt(Date deletedAt) {
+    public UserDto setDeletedAt(Date deletedAt) {
         this.deletedAt = deletedAt;
+        return this;
     }
     
 }
