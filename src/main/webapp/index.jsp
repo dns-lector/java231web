@@ -33,6 +33,7 @@
             <nav>
                 <a href="<%= contextPath %>/gson" >Gson</a>
                 <a href="<%= contextPath %>/db" >DB</a>
+                <a href="<%= contextPath %>/admin" >Admin</a>
             </nav>
         </header>
         <main>

@@ -20,7 +20,7 @@ public class UserDto {
     public static UserDto fromResultSet(ResultSet rs) throws SQLException {
         Timestamp t = rs.getTimestamp("deleted_at");
         return new UserDto()
-                .setId(UUID.fromString(rs.getString("id")))
+                .setId( UUID.fromString(rs.getString("id")) )
                 .setName(rs.getString("name"))
                 .setEmail(rs.getString("email"))
                 .setCreatedAt(new Date(rs.getTimestamp("created_at").getTime()))

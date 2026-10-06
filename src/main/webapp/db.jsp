@@ -23,3 +23,4 @@
     <button>Hello</button><br/>
     <%= request.getAttribute("sql3") %>
 </form>
+<img src="<%= request.getContextPath() %>/img/84dd3b41-e654-4c64-b784-25031bf675ed.webp" />

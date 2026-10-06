@@ -10,6 +10,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import step.learning.java231web.data.dao.UserDao;
@@ -28,6 +30,13 @@ public class UserServlet extends HttpServlet {
     private final UserDao userDao;
     private final Gson gson;
     private final Logger logger;
+    private RestMeta meta = new RestMeta()
+            .setServiceName( "API 'Users'" )
+            .setManipulations( new String[]{ "GET", "POST" } )
+            .setLinks( new HashMap<>( Map.ofEntries(
+                    Map.entry("auth", "/"),
+                    Map.entry("list", "/all")
+            )));
 
     @Inject
     public UserServlet(UserDao userDao, Gson gson, Logger logger) {
@@ -37,21 +46,29 @@ public class UserServlet extends HttpServlet {
     }
 
     @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // виконується перед розгалуженням на doXxx методи
+        // дозволяє обробити запити нестандартними методами LINK, REQUEUE тощо
+        // а також виконати спільні для всіх запитів дії
+        meta.setServerTime( System.currentTimeMillis() );
+        super.service(req, resp);
+    }    
+
+    @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        /* Sign Up by UserSignupFormModel
-        */
+        /* Sign Up by UserSignupFormModel */        
         UserSignupFormModel formModel = gson.fromJson(
                 req.getReader(),
                 UserSignupFormModel.class
         );
         RestResponse restResponse;
+        meta.setDataType("null");
         try {
             userDao.signupUser(formModel);
-            restResponse = RestResponse.Ok(null, null);
+            restResponse = RestResponse.Ok( meta, null );
         } 
         catch (SQLException ex) {
-            System.getLogger(UserServlet.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
-            restResponse = RestResponse.ErrorInternal(null, null);
+            restResponse = RestResponse.ErrorInternal( meta, null );
         }
         resp.getWriter().print( gson.toJson(restResponse) );
     }
@@ -86,76 +103,27 @@ public class UserServlet extends HttpServlet {
         // загальна кількість елементів - береться з БД окремим запитом
         //  з усіма фільтрами, що й в основному
         RestResponse restResponse;
-        long cnt;
+        RestPagination pagination;
         try {
-            cnt = userDao.getUsersCount();
-        } 
-        catch (SQLException ex) {
-            logger.log(Level.SEVERE, (String) null, ex);
-            restResponse = RestResponse.ErrorInternal(null, null);
-            resp.getWriter().print( gson.toJson(restResponse) );
-            return;
-        }
-        
-        long pageSize;
-        String pageSizeParam = req.getParameter("pageSize");
-        if(pageSizeParam != null) {
-            try { pageSize = Long.parseLong(pageSizeParam); }
-            catch(NumberFormatException ignore) {
-                restResponse = RestResponse.BadRequest(null, 
-                        "Number parse error for parameter 'pageSize'");
-                resp.getWriter().print( gson.toJson(restResponse) );
-                return;
-            }
-            if(pageSize <= 0) {
-                restResponse = RestResponse.BadRequest(null, 
-                        "Parameter 'pageSize' must not be negative or zero");
-                resp.getWriter().print( gson.toJson(restResponse) );
-                return;
-            }
-        }
-        else {
-            pageSize = 10;
-        }
-        
-        long totalPages = Math.ceilDiv(cnt, pageSize);
-        
-        long page;
-        String pageParam = req.getParameter("page");
-        if(pageParam != null) {
-            try { page = Long.parseLong(pageParam); }
-            catch(NumberFormatException ignore) {
-                restResponse = RestResponse.BadRequest(null, 
-                        "Number parse error for parameter 'page'");
-                resp.getWriter().print( gson.toJson(restResponse) );
-                return;
-            }
-            if(page <= 0 || page > totalPages) {
-                restResponse = RestResponse.BadRequest(null, 
-                        "Parameter 'page' must be in range 1.." + totalPages);
-                resp.getWriter().print( gson.toJson(restResponse) );
-                return;
-            }
-        }
-        else {
-            page = 1;
-        }
-        RestPagination pagination = new RestPagination()
-                .setTotalItems(cnt)
-                .setPage(page)
-                .setPageSize(pageSize)
-                .setTotalPages(totalPages);
-        try {
+            pagination = RestPagination.fromRequest(
+                    req, 
+                    userDao.getUsersCount()
+            );
             restResponse = RestResponse.Ok(
-                    new RestMeta()
+                    meta
                         .setCacheTime(1000)
                         .setDataType("array")
                         .setPagination(pagination), 
                     userDao.getUsers(pagination)
-            );
+            ); 
+        } 
+        catch (SQLException ex) {
+            restResponse = RestResponse.ErrorInternal( 
+                    meta.setDataType("null"), null );
         }
-        catch(SQLException ex) {
-            restResponse = RestResponse.ErrorInternal(null, null);
+        catch(Exception ex) {
+            restResponse = RestResponse.BadRequest( 
+                    meta.setDataType("string"), ex.getMessage() );
         }
         resp.getWriter().print( gson.toJson(restResponse) );
     }
@@ -218,4 +186,10 @@ req.getPathInfo()    "/all"                           "/"    null   "/123/456"
 req.getQueryString() "x=10&y=20"
 
 req.getRequestURI()  "/java231web/user/all"
+*/
+/*
+Д.З. Реалізувати точку /user/access, яка буде виводити
+дані про логіни користувачів: userId - login - role
+у режимі пагінації
+* додати до результатів, що виводяться, ім'я користувача та E-mail
 */

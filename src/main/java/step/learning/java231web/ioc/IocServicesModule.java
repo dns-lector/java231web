@@ -5,10 +5,14 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import step.learning.java231web.services.db.IDbService;
 import step.learning.java231web.services.db.MySqlDbService;
+import step.learning.java231web.services.form.IFormParseService;
+import step.learning.java231web.services.form.MixedFormParseService;
 import step.learning.java231web.services.hash.IHashService;
 import step.learning.java231web.services.hash.Md5HashService;
 import step.learning.java231web.services.kdf.IKdfService;
 import step.learning.java231web.services.kdf.PbKdf1Service;
+import step.learning.java231web.services.storage.DiskStorageService;
+import step.learning.java231web.services.storage.IStorageService;
 
 /**
  * Модуль конфігурації сервісів (служб) інжектора
@@ -30,6 +34,10 @@ public class IocServicesModule extends AbstractModule {
         );
         bind( IKdfService.class )
                 .to( PbKdf1Service.class );
+        bind( IStorageService.class )
+                .to( DiskStorageService.class );
+        bind( IFormParseService.class )
+                .to( MixedFormParseService.class );
     }
     
 }

@@ -12,6 +12,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import step.learning.java231web.data.dao.ProductDao;
+import step.learning.java231web.data.dao.ProductSectionDao;
+import step.learning.java231web.data.dao.ProductVersionDao;
 import step.learning.java231web.data.dao.UserDao;
 import step.learning.java231web.services.db.IDbService;
 
@@ -21,13 +24,19 @@ import step.learning.java231web.services.db.IDbService;
  */
 @Singleton
 public class DbServlet extends HttpServlet{
-    private final IDbService dbService;
     private final UserDao userDao;
+    private final IDbService dbService;
+    private final ProductSectionDao productSectionDao;
+    private final ProductDao productDao;
+    private final ProductVersionDao productVersionDao; 
 
     @Inject
-    public DbServlet(IDbService dbService, UserDao userDao) {
+    public DbServlet(IDbService dbService,ProductVersionDao productVersionDao,ProductDao productDao, UserDao userDao, step.learning.java231web.data.dao.ProductSectionDao productSectionDao) {
         this.dbService = dbService;
         this.userDao = userDao;
+        this.productSectionDao = productSectionDao;
+        this.productDao = productDao;
+        this.productVersionDao = productVersionDao;
     }
     
     @Override
@@ -42,16 +51,26 @@ public class DbServlet extends HttpServlet{
         }
         
         if(connection != null) {
+            String attr = "";
             try {
                 userDao.createTable();
-                String attr = "Create Tables OK";
+                attr += "Create Tables OK";
                 userDao.seedData();
-                attr += ", Seed Data OK";
-                req.setAttribute("sql", attr );  
+                attr += ", Seed Data OK";                
+                productSectionDao.createTable();
+                attr += "<br/> productSection: Create Tables OK ";
+                productDao.createTable();
+                attr += "<br/> product: Create Tables OK ";
+                productVersionDao.createTable();
+                attr += "<br/> productVersion: Create Tables OK ";
+                
+                productSectionDao.seedData();
+                attr += ", Seed Data OK";          
             }
             catch( SQLException ex ) {
-                req.setAttribute("sql", ex.getMessage() );  
-            }
+                attr += ex.getMessage();  
+            }      
+            req.setAttribute("sql", attr );  
             
             // запити з результатами
             String sql = "select current_timestamp, current_date " +
