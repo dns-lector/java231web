@@ -9,9 +9,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import step.learning.java231web.data.dao.ProductSectionDao;
+import step.learning.java231web.data.dto.Product;
+import step.learning.java231web.data.dto.ProductSection;
 import step.learning.java231web.rest.RestMeta;
 import step.learning.java231web.rest.RestPagination;
 import step.learning.java231web.rest.RestResponse;
@@ -25,7 +30,7 @@ import step.learning.java231web.rest.RestResponse;
 public class ProductSectionServlet extends HttpServlet {
     private final ProductSectionDao productSectionDao;
     private final Gson gson;
-    private RestMeta meta = new RestMeta()
+    private final RestMeta meta = new RestMeta()
             .setServiceName( "API 'Product Sections'" )
             .setManipulations( new String[]{ "GET" } )
             .setLinks( new HashMap<>( Map.ofEntries(
@@ -61,16 +66,55 @@ public class ProductSectionServlet extends HttpServlet {
         RestResponse restResponse;
         RestPagination pagination;
         try {
+            String prefix = StorageServlet.getPathPrefix(req);
+            List<ProductSection> sections = new ArrayList<>(
+                    productSectionDao
+                    .getSections()
+                    .stream()
+                    .map((section) -> section.setImageUrl( prefix + section.getImageUrl() ))
+                    .toList()
+            );      
+            // Задача: перетворити "плоский" перелік груп, частина яких посилається на
+            // батьківську групу, до ієрархічної структури, в якій дочірні групи
+            // знаходяться безпосередньо у батьківській.
+            // Алгоритм: проходимо по переліку, якщо знаходимо групу з ненульовою
+            // батьківською групою, то знаходимо відповідну батьківську групу
+            // та переносимо дану групу до її дочірнього переліку (а з основного
+            // переліку вилучаємо)
+            List<ProductSection> removeSections = new ArrayList<>();
+            for(ProductSection section : sections) {
+                UUID parentId = section.getParentId();
+                if(parentId != null) {
+                    // ProductSection parent = null;
+                    for(ProductSection s : sections) {
+                        if(parentId.equals(s.getId())) {
+                            // s - parent of section
+                            s.getChildren().add(section);
+                            removeSections.add(section);
+                        }
+                    }
+                }
+            }
+            for(ProductSection section : removeSections) {
+                sections.remove(section);
+            }
+            // Робота з пагінацією змінюється - обмеження вибірки БД
+            // неможливо задати через випадкове розміщення дочірних і             
+            // батьківських груп у БД - Реалізуємо повну вибірку та обмежуємо
+            // її засобами мови програмування.            
             pagination = RestPagination.fromRequest(
                     req, 
-                    productSectionDao.getSectionsCount()
+                    sections.size()
             );
             restResponse = RestResponse.Ok(
                     meta
                         .setCacheTime(1000000)
                         .setDataType("array")
                         .setPagination(pagination), 
-                    productSectionDao.getSections(pagination)
+                    sections.stream()
+                        .skip(pagination.getPageSize() * (pagination.getPage() - 1))
+                        .limit(pagination.getPageSize())
+                        .toArray()
             ); 
         } 
         catch (SQLException ex) {
@@ -81,6 +125,7 @@ public class ProductSectionServlet extends HttpServlet {
             restResponse = RestResponse.BadRequest( 
                     meta.setDataType("string"), ex.getMessage() );
         }
+        resp.setContentType("application/json");
         resp.getWriter().print( gson.toJson(restResponse) );
     }
     
@@ -91,15 +136,32 @@ public class ProductSectionServlet extends HttpServlet {
         try {
             pagination = RestPagination.fromRequest(
                     req, 
-                    productSectionDao.getSectionsCount()
+                    productSectionDao.getProductsCountBySectionSlug(slug)
             );
-            restResponse = RestResponse.Ok(
-                    meta
-                        .setCacheTime(1000000)
-                        .setDataType("object")
-                        .setPagination(pagination), 
-                    slug
-            ); 
+            ProductSection productSection = 
+                    productSectionDao.getSectionBySlug(slug, pagination);
+            if( productSection == null ) {                 
+                restResponse = RestResponse.NotFound(
+                        meta.setDataType("null"), null);
+            }
+            else {             
+                // коригуємо посилання на зображення, оскільки у БД 
+                // знаходяться лише імена файлів
+                String prefix = StorageServlet.getPathPrefix(req);
+                for(Product p : productSection.getProducts()) {
+                    p.setImageUrl( prefix + p.getImageUrl() );
+                }
+                for(ProductSection s : productSection.getChildren()) {
+                    s.setImageUrl( prefix + s.getImageUrl() );
+                }
+                restResponse = RestResponse.Ok(
+                        meta
+                            .setCacheTime(1000000)
+                            .setDataType("object")
+                            .setPagination(pagination), 
+                        productSection
+                );
+            }
         } 
         catch (SQLException ex) {
             restResponse = RestResponse.ErrorInternal( 
@@ -112,3 +174,8 @@ public class ProductSectionServlet extends HttpServlet {
         resp.getWriter().print( gson.toJson(restResponse) );
     }
 }
+/*
+Д.З. Реалізувати стилізацію карток підгруп товарної групи
+Рекомендується відокремити картки підгруп від карток 
+основних груп.
+*/

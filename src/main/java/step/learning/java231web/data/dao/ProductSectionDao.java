@@ -30,14 +30,60 @@ public class ProductSectionDao {
         this.logger = logger;
     }
     
-    public long getProductsCountBySectionSlug(String slug) {
-        return 0;
+    public long getProductsCountBySectionSlug(String slug) throws SQLException {
+        String sql = "select count(*) from products p " +
+        "join product_sections ps on p.product_section_id = ps.product_section_id " +
+        "where ps.product_section_slug = ?";
+        try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
+            prep.setString(1, slug);
+            try( ResultSet rs = prep.executeQuery() ) {
+                rs.next();
+                return rs.getLong(1);                
+            }
+        }
+        catch( SQLException ex ) {
+            logger.log(Level.WARNING, sql, ex);
+            throw ex;
+        }
     }
     
-    public ProductSection getSectionBySlug(String slug, RestPagination pagination) {
-        return null;
+    public ProductSection getSectionBySlug(String slug, RestPagination pagination) throws SQLException {
+        ProductSection productSection = null;
+        String sql = "SELECT * FROM product_sections ps "
+                + "LEFT JOIN products p ON ps.product_section_id = p.product_section_id "
+                + "WHERE ps.product_section_slug = ? "
+                + "ORDER BY p.product_order LIMIT ? OFFSET ?";
+        try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
+            prep.setString(1, slug);
+            prep.setLong(2, pagination.getPageSize());
+            prep.setLong(3, pagination.getPageSize() * (pagination.getPage() - 1));
+            try( ResultSet rs = prep.executeQuery() ) {
+                if(rs.next()) {
+                    productSection = ProductSection.fromResultSet(rs, true);
+                }
+            }
+        }
+        catch( SQLException ex ) {
+            logger.log(Level.WARNING, sql, ex);
+            throw ex;
+        }
+        // заповнюємо дані про дочірні розділи
+        if(productSection != null) {
+            sql = String.format( "SELECT * FROM product_sections ps "
+                    + "WHERE ps.product_section_parent_id = '%s'",
+                    productSection.getId()
+            );
+            try(Statement statement = dbService.getConnection().createStatement();
+                ResultSet rs = statement.executeQuery(sql) ) {
+                while(rs.next()) {
+                    productSection.getChildren()
+                            .add(ProductSection.fromResultSet(rs));
+                }
+            }
+        }
+        return productSection;
     }
-    
+        
     public long getSectionsCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM product_sections";
         try(Statement stmt = dbService.getConnection().createStatement();

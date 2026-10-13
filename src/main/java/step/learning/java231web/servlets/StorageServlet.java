@@ -16,6 +16,19 @@ import step.learning.java231web.services.storage.IStorageService;
  */
 @Singleton
 public class StorageServlet extends HttpServlet {
+    public static final String SERVLET_PATH = "storage";
+    public static String getPathPrefix(HttpServletRequest req) {        
+        // http://localhost:8080/java231web/storage/  {filename}
+        return String.format(
+                "%s://%s:%d%s/%s/",
+                req.getScheme(),
+                req.getServerName(),
+                req.getServerPort(),
+                req.getContextPath(),
+                SERVLET_PATH
+        );
+    }
+    
     private final IStorageService storageService;
 
     @Inject

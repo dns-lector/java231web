@@ -14,6 +14,7 @@ import step.learning.java231web.data.dao.ProductDao;
 import step.learning.java231web.data.dao.ProductSectionDao;
 import step.learning.java231web.data.dao.ProductVersionDao;
 import step.learning.java231web.data.dto.Product;
+import step.learning.java231web.data.dto.ProductSection;
 import step.learning.java231web.data.dto.ProductVersion;
 import step.learning.java231web.data.models.AdminProductViewModel;
 import step.learning.java231web.services.form.FormParseException;
@@ -53,6 +54,9 @@ public class AdminServlet extends HttpServlet {
         else if("/product".equals(pathInfo)) {
             productView(req, resp);
         }
+        else if("/section".equals(pathInfo)) {
+            sectionView(req, resp);
+        }
         /*
         Д.З. Реалізувати сторінку 404 для внутрішніх маршрутів
         адміністративної сторінки.
@@ -80,6 +84,19 @@ public class AdminServlet extends HttpServlet {
         
         req.getRequestDispatcher("../index.jsp").forward(req, resp);
     }
+    
+    private void sectionView(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setAttribute("pathInfo", "section"); 
+        try {
+            req.setAttribute("viewModel", 
+                    new AdminProductViewModel()
+                    .setProductSections(productSectionDao.getSections())
+            );
+        }
+        catch(SQLException ignore) { }
+        
+        req.getRequestDispatcher("../index.jsp").forward(req, resp);
+    }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -91,6 +108,9 @@ public class AdminServlet extends HttpServlet {
         else if("/product".equals(pathInfo)) {            
             // обробляємо дані форми, що передається
             processProductForm(req, resp);
+        }
+        else if("/section".equals(pathInfo)) {            
+            processSectionForm(req, resp);
         }
     }
     
@@ -133,4 +153,42 @@ public class AdminServlet extends HttpServlet {
        req.setAttribute("pathInfo", "product");
        req.getRequestDispatcher("../index.jsp").forward(req, resp);
     }
+
+    private void processSectionForm(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+       IFormParseResult form;
+       AdminProductViewModel viewModel = new AdminProductViewModel();
+       try {
+           viewModel.setProductSections(productSectionDao.getSections());
+           form = formParseService.parse(req);
+           /*
+           Д.З. Реалізувати валідацію даних
+           форми додавання нового розділу
+           з відображенням помилок на сторінці форми.
+           */
+            String filename = storageService.save(
+                    form.getFiles().get("section-image")
+            );
+            Map<String,String> fields = form.getFields();
+            ProductSection section = new ProductSection()
+                   .setTitle(fields.get("section-title"))
+                   .setDescription(fields.get("section-description"))
+                   .setSlug(fields.get("section-slug"))
+                   .setImageUrl(filename)
+                   .setOrderInPrice(Long.parseLong(fields.get("section-order")));
+            String parentId = fields.get("section-parent-id");
+            if(parentId != null && !"".equals(parentId)) {
+                   section.setParentId( UUID.fromString(parentId) );
+            }
+            UUID sectionId = productSectionDao.addProductSection(section);
+            viewModel.setOkMessage(
+                    "New section ID: " + sectionId);
+       }
+       catch(IOException | SQLException | FormParseException ex) {
+           viewModel.setExceptionMessage(ex.getMessage());
+       }
+       req.setAttribute("viewModel", viewModel);
+       req.setAttribute("pathInfo", "section");
+       req.getRequestDispatcher("../index.jsp").forward(req, resp);
+    }
+
 }

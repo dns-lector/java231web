@@ -3,7 +3,9 @@ package step.learning.java231web.data.dto;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -19,11 +21,15 @@ public class ProductSection {
     private String imageUrl;
     private Date deletedAt;
     private long orderInPrice;
+    // ~ навігаційні властивості
+    private List<Product> products;
+    private List<ProductSection> children = new ArrayList<>();
     
-    public static ProductSection fromResultSet(ResultSet rs) throws SQLException {
+    public static ProductSection fromResultSet(ResultSet rs, boolean isIcludeProducts) throws SQLException {
         Timestamp t = rs.getTimestamp("product_section_deleted_at");
         String parentId = rs.getString("product_section_parent_id");
-        return new ProductSection()
+        List<Product> products = new ArrayList<>();
+        ProductSection res = new ProductSection()
                 .setId( UUID.fromString(rs.getString("product_section_id")) )
                 .setParentId( parentId == null ? null : UUID.fromString(parentId) )
                 .setTitle(rs.getString("product_section_title"))
@@ -32,6 +38,37 @@ public class ProductSection {
                 .setImageUrl(rs.getString("product_section_image_url"))
                 .setDeletedAt(t == null ? null : new Date(t.getTime()))
                 .setOrderInPrice(rs.getLong("product_section_order"));
+        if(isIcludeProducts) {
+            do {
+                try { products.add( Product.fromResultSet(rs) ); }
+                catch(Exception ignore){}
+            } 
+            while( rs.next() );
+        }
+        return res.setProducts(products);
+    }
+    
+    public static ProductSection fromResultSet(ResultSet rs) throws SQLException {
+        return ProductSection.fromResultSet(rs, false);
+    }
+
+    public List<ProductSection> getChildren() {
+        return children;
+    }
+
+    public ProductSection setChildren(List<ProductSection> children) {
+        this.children = children;
+        return this;
+    }
+
+    
+    public List<Product> getProducts() {
+        return products;
+    }
+
+    public ProductSection setProducts(List<Product> products) {
+        this.products = products;
+        return this;
     }
 
     public UUID getId() {
